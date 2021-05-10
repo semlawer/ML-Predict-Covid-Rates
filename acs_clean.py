@@ -36,7 +36,7 @@ def summarize_demographics(csv_file):
         df: panda dataframe with column data on age, race, and gender.
     '''
 
-    build = ['county_state','total_pop', 'male', 'perc_male','female', 'perc_female',
+    build = ['geo_id', 'county_state','total_pop', 'male', 'perc_male','female', 'perc_female',
             'age_under5', 'p_age_under5', 'age_5_9', 'p_age_5_9', 'age_10_14', 'p_age_10_14',
             'age_15_19', 'p_age_15_19', 'age_20_24', 'p_age_20_24', 'age_25_34', 'p_age_25_34',
             'age_35_44', 'p_age_35_44', 'age_45_54', 'p_age_45_54', 'age_55_59', 'p_age_55_59',
@@ -46,7 +46,7 @@ def summarize_demographics(csv_file):
             'p_asian', 'hawaiian', 'p_hawaiian', 'other_race', 'p_other_race', 'hispanic', 'p_hispanic',
             'housing_units']
 
-    extract = ["NAME", "DP05_0001E", "DP05_0002E", "DP05_0002PE", "DP05_0003E", "DP05_0003PE",
+    extract = ["GEO_ID", "NAME", "DP05_0001E", "DP05_0002E", "DP05_0002PE", "DP05_0003E", "DP05_0003PE",
     "DP05_0005E", "DP05_0005PE", "DP05_0006E", "DP05_0006PE", "DP05_0007E","DP05_0007PE", "DP05_0008E",
     "DP05_0008PE", "DP05_0009E", "DP05_0009PE", "DP05_0010E", "DP05_0010PE", "DP05_0011E", "DP05_0011PE", 
     "DP05_0012E","DP05_0012PE", "DP05_0013E", "DP05_0013PE", "DP05_0014E", "DP05_0014PE", "DP05_0015E", 
@@ -62,6 +62,8 @@ def summarize_demographics(csv_file):
     demo[['county','state']] = demo['county_state'].str.split(', ',expand=True)
     df = demo[demo["state"].isin(["Wisconsin", "Illinois", "North Dakota", "South Dakota", "Nebraska", 
     "Kansas", "Michigan", "Indiana", "Minnesota", "Iowa", "Missouri", "Ohio"])]
+    #df["geo_id"] = df["geo_id"].astype("str")
+    df["fips"] = df["geo_id"].str[-5:]
     print(df.dtypes)
 
     return df
@@ -77,11 +79,11 @@ def summarize_poverty(csv_file):
         df: panda dataframe with column data on poverty level.
     '''
 
-    build = ['county_state','below_50_pov', 'below_125_pov', 'below_150_pov','below_185_pov', 
-            'below_200_pov', 'below_300_pov', 'below_400_pov', 'below_500_pov', 
-            'below_pov', 'male_below_pov', 'female_below_pov',]
+    build = ['geo_id', 'county_state','below_50_pov', 'below_125_pov', 'below_150_pov', 
+            'below_185_pov', 'below_200_pov', 'below_300_pov', 'below_400_pov', 
+            'below_500_pov', 'below_pov', 'male_below_pov', 'female_below_pov',]
 
-    extract = ["NAME", "S1701_C01_038E", 'S1701_C01_039E', 'S1701_C01_040E', 'S1701_C01_041E',
+    extract = ["GEO_ID", "NAME", "S1701_C01_038E", 'S1701_C01_039E', 'S1701_C01_040E', 'S1701_C01_041E', 
             'S1701_C01_042E', 'S1701_C01_043E', 'S1701_C01_044E', 'S1701_C01_045E', 'S1701_C02_001E',
             'S1701_C02_011E', 'S1701_C02_012E']
     
@@ -92,6 +94,7 @@ def summarize_poverty(csv_file):
     df = poverty[poverty["state"].isin(["Wisconsin", "Illinois", "North Dakota", "South Dakota", "Nebraska", 
     "Kansas", "Michigan", "Indiana", "Minnesota", "Iowa", "Missouri", "Ohio"])]
     print(df.state.unique())
+    df["fips"] = df["geo_id"].str[-5:]
 
     return df
 
@@ -99,13 +102,15 @@ def acs_full(demographics, poverty):
     '''
     Merge all the ACS data sets together
     '''
-    acs = demographics.merge(poverty, on=["county_state", "county", "state"], how="outer")
+    acs = demographics.merge(poverty, on=["fips", "geo_id", "county_state", "state", "county"]
+        , how="outer")
     acs["age_under14"] = acs["age_under5"] + acs['age_5_9'] + acs['age_10_14']
     acs["p_under14"] =  acs["p_age_under5"] + acs['p_age_5_9'] + acs['p_age_10_14']
     acs["non_white"] = pd.to_numeric(acs["total_pop"]) - pd.to_numeric(acs["white"])
     acs["p_non_white"] = 100 - pd.to_numeric(acs["p_white"])
     acs.drop(["age_under5", 'age_5_9', 'age_10_14', "p_age_under5", 'p_age_5_9', 'p_age_10_14', \
-        'age_65_74', 'p_age_65_74', 'age_75_84', 'p_age_75_84', 'age_85over', 'p_age_85over'], axis = 1, inplace = True)
+        'age_65_74', 'p_age_65_74', 'age_75_84', 'p_age_75_84', 'age_85over', 'p_age_85over',
+        'geo_id', 'county_state'], axis = 1, inplace = True)
     
     return acs
 
@@ -113,4 +118,6 @@ def export_data(acs):
     '''
     Export data to csv to use in the build
     '''
+    col = acs.pop("fips")
+    acs.insert(0, col.name, col)
     acs.to_csv("Data/ACS Data.csv", index = False)
