@@ -78,8 +78,8 @@ class TimeBasedCV(object):
             cur_test_indices = list(data[(data[date_column].dt.date>=start_test) &
                                     (data[date_column].dt.date<end_test)].index)
             
-            print("Train period:",start_train,"-" , end_train, ", Test period", start_test, "-", end_test,
-                  "# train records", len(cur_train_indices), ", # test records", len(cur_test_indices))
+            #print("Train period:",start_train,"-" , end_train, ", Test period", start_test, "-", end_test,
+            #      "# train records", len(cur_train_indices), ", # test records", len(cur_test_indices))
 
             train_indices_list.append(cur_train_indices)
             test_indices_list.append(cur_test_indices)
