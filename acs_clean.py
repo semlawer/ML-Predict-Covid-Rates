@@ -104,10 +104,12 @@ def acs_full(demographics, poverty):
     '''
     acs = demographics.merge(poverty, on=["fips", "geo_id", "county_state", "state", "county"]
         , how="outer")
+    cols = acs.columns.drop(["fips", "geo_id", "county_state", "state", "county"])
+    acs[cols] = acs[cols].apply(pd.to_numeric, errors='coerce')
     acs["age_under14"] = acs["age_under5"] + acs['age_5_9'] + acs['age_10_14']
     acs["p_under14"] =  acs["p_age_under5"] + acs['p_age_5_9'] + acs['p_age_10_14']
-    acs["non_white"] = pd.to_numeric(acs["total_pop"]) - pd.to_numeric(acs["white"])
-    acs["p_non_white"] = 100 - pd.to_numeric(acs["p_white"])
+    acs["non_white"] = acs["total_pop"] - acs["white"]
+    acs["p_non_white"] = 100 - acs["p_white"]
     acs.drop(["age_under5", 'age_5_9', 'age_10_14', "p_age_under5", 'p_age_5_9', 'p_age_10_14', \
         'age_65_74', 'p_age_65_74', 'age_75_84', 'p_age_75_84', 'age_85over', 'p_age_85over',
         'geo_id', 'county_state'], axis = 1, inplace = True)
@@ -121,3 +123,4 @@ def export_data(acs):
     col = acs.pop("fips")
     acs.insert(0, col.name, col)
     acs.to_csv("Data/ACS Data.csv", index = False)
+
