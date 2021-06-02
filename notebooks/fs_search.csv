@@ -1,5 +1,0 @@
-feature_selection__k,feature_selection__score_func,neg_mean_squared_error,r2
-20,<function mutual_info_regression at 0x7fe9b65c4160>,-2223.649516,0.879072959
-30,<function mutual_info_regression at 0x7fe9b65c4160>,-1441.048754,0.899664372
-50,<function mutual_info_regression at 0x7fe9b65c4160>,-1605.178329,0.928879717
-all,<function mutual_info_regression at 0x7fe9b65c4160>,-2.71E+18,-4.76579E+14
