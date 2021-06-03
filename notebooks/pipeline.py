@@ -2,28 +2,32 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 
-# TO REPLACE
-def normalize(train_data, test_data, features):
-    '''
-    takes 2 datasets (testing data and trainning data) and a list of features to normalize 
-    and changes columns to normalized new columns.
-    '''
-    
-    scaler = StandardScaler()
-    train = train_data.copy()
-    test = test_data.copy()
-    
-    normal_train = scaler.fit_transform(train[features])
-    normal_test = scaler.transform(test[features])
-    
-    for i, col in enumerate(features):
-        train.loc[:, col] = normal_train[:, i]
-        test.loc[:, col] = normal_test[:, i]
+def _normalize_helper(df, cols, scaler=None):
 
-    return train, test
+    # Normalizing train set
+    if(scaler is None):
+      scaler = StandardScaler()
+      normalized_features = pd.DataFrame(scaler.fit_transform(df[cols]))
+
+    # Normalizing test set (with the values based on the training set)
+    else:
+      normalized_features = pd.DataFrame(scaler.transform(df[cols]))
+
+    normalized_features.columns = cols
+    normalized_df = pd.concat([df.drop(columns=cols).reset_index(drop=True), normalized_features], axis=1)
+
+    return normalized_df, scaler
+
+def normalize(train, test, cols):
+    """
+    Normalize training and test data
+    """
+    training_normalized, scaler = _normalize_helper(train, cols)
+    test_normalized, _ = _normalize_helper(test, cols, scaler)
+
+    return training_normalized, test_normalized
 
 
-# BL: my one hot encoder function from the last assignment
 def one_hot_encode(df, var_list):
     """
     Helper function for standardize_encoding
